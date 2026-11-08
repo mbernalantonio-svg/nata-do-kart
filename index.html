@@ -1,0 +1,940 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Nata do Kart</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<style>
+/* Layout: cabeçalho fixo tipo painel de box, três telas (corridas, nova corrida, comparativo), tudo em coluna única que cresce para duas colunas só em tabelas largas. */
+:root{
+  --bg:#e8eae4; --surface:#f5f6f1; --ink:#15181a; --muted:#59625c; --line:#cdd2c9;
+  --accent:#d9361e; --accent-ink:#ffffff; --good:#1f7a4d; --warn:#9a6700; --wet:#1f6fb2;
+  --c1:#d9361e; --c2:#1f6fb2; --c3:#2f8f5b; --c4:#a87400; --c5:#7a4fb5; --c6:#0f8b8d;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121513; --surface:#1b1f1c; --ink:#eceee9; --muted:#98a199; --line:#2c332e;
+    --accent:#ff5a3d; --accent-ink:#1a0804; --good:#4cc084; --warn:#e0a82e; --wet:#5aa7e8;
+    --c1:#ff6a4d; --c2:#5aa7e8; --c3:#4cc084; --c4:#e0a82e; --c5:#a98be0; --c6:#3cc3c5;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121513; --surface:#1b1f1c; --ink:#eceee9; --muted:#98a199; --line:#2c332e;
+  --accent:#ff5a3d; --accent-ink:#1a0804; --good:#4cc084; --warn:#e0a82e; --wet:#5aa7e8;
+  --c1:#ff6a4d; --c2:#5aa7e8; --c3:#4cc084; --c4:#e0a82e; --c5:#a98be0; --c6:#3cc3c5;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.45;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:0 40px;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.wrap{max-width:760px;margin:0 auto}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);padding-top:14px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.wordmark{font-family:var(--f-display);font-weight:700;font-size:30px;letter-spacing:.04em;text-transform:uppercase;line-height:1;margin:0}
+.wordmark span{color:var(--accent)}
+.checker{height:8px;margin:8px 0 0;background:repeating-conic-gradient(var(--ink) 0 25%,transparent 0 50%) 0 0/8px 8px;opacity:.85;border-radius:1px}
+nav.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--line);margin-top:2px}
+nav.tabs a{font-family:var(--f-display);font-weight:600;font-size:17px;letter-spacing:.06em;text-transform:uppercase;text-align:center;padding:12px 4px 10px;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;margin-bottom:-1px}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,.pick:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+main{padding-top:18px;display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:.03em;text-transform:uppercase;margin:0;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:18px;letter-spacing:.05em;text-transform:uppercase;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.mono,td.t,.t{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button,select,input,textarea{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:5px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent}
+.btn.small{min-height:36px;padding:0 12px;font-size:13px}
+.btn[disabled],.btn.off{opacity:.5;cursor:not-allowed}
+.btn.off{pointer-events:none}
+.btn.busy{opacity:.6}
+.pick{position:relative}
+.fin{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+.fin:disabled{cursor:not-allowed}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label,.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+input[type=text],input[type=date],select{width:100%;min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:5px;background:var(--bg);min-width:0}
+textarea{width:100%;min-height:96px;padding:8px 10px;border:1px solid var(--line);border-radius:5px;background:var(--surface);resize:vertical;font-family:var(--f-mono);font-size:13px}
+input.err,textarea.err{border-color:var(--accent)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{min-height:44px;border:0;border-right:1px solid var(--line);background:var(--bg);font-weight:600;cursor:pointer;padding:0 6px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.seg.bad{border-color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:420px){.grid2.stackable{grid-template-columns:1fr}}
+.chip{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:99px;color:var(--muted);white-space:nowrap}
+.chip.kind{color:var(--ink);border-color:var(--ink)}
+.chip.wet{color:var(--wet);border-color:var(--wet)}
+.chip.dry{color:var(--warn);border-color:var(--warn)}
+.banner{border:1px solid var(--line);border-left:4px solid var(--warn);background:var(--surface);padding:10px 12px;border-radius:4px;font-size:13px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.banner.info{border-left-color:var(--c2)}
+.empty{text-align:left;padding:22px 16px}
+.empty p{margin:6px 0 14px;color:var(--muted);max-width:52ch}
+.empty .actions{display:flex;gap:10px;flex-wrap:wrap}
+details.race{background:var(--surface);border:1px solid var(--line);border-radius:6px}
+details.race summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:12px 14px}
+details.race summary::-webkit-details-marker{display:none}
+.r-date{grid-column:1/-1;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.r-track{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:.03em;text-transform:uppercase;line-height:1.1;overflow-wrap:anywhere}
+.r-chips{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.r-win{grid-column:1/-1;font-size:13px;color:var(--muted)}
+.r-win b{color:var(--ink);font-weight:600}
+.r-body{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:right;font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:nth-child(2),td:nth-child(2){text-align:left}
+td:nth-child(2){white-space:normal;min-width:96px}
+table.lapgrid th:nth-child(2),table.lapgrid td:nth-child(2){text-align:right}
+table.lapgrid td:nth-child(2){white-space:nowrap;min-width:0}
+tr:last-child td{border-bottom:0}
+td.pos{font-family:var(--f-display);font-weight:700;font-size:18px;width:2.2em;text-align:left}
+td.lead{color:var(--accent)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:baseline}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.imports{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:480px){.imports{grid-template-columns:1fr}}
+.imports .btn{flex-direction:column;gap:0;min-height:56px;line-height:1.2;text-align:center}
+.imports small{font-weight:400;font-size:11px;color:var(--muted)}
+.rows{display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;padding:10px;border:1px solid var(--line);border-radius:5px;background:var(--bg)}
+.row .c2{grid-column:span 2}.row .c3{grid-column:span 3}.row .c4{grid-column:span 4}.row .c6{grid-column:span 6}.row .c12{grid-column:span 12}
+.row .field label{font-size:10px}
+.row .sm{grid-column:span 12;font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.row input,.row select{background:var(--surface)}
+.row .rm{align-self:end}
+.row .rm .btn{width:100%;padding:0}
+.status{font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-height:20px}
+.status.bad{color:var(--accent)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:5px;font-size:14px;z-index:20;max-width:90vw}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.pchip{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:99px;background:var(--surface);cursor:pointer;font-size:14px}
+.pchip[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.chartbox{max-width:560px;width:100%}
+svg.chart{width:100%;height:auto;display:block}
+svg.chart text{font-family:var(--f-body);fill:var(--muted);font-size:11px}
+svg.chart text.nm{fill:var(--ink);font-size:12px;font-weight:500}
+svg.chart text.tm{font-family:var(--f-mono);font-size:10px}
+svg.chart text.gp{font-family:var(--f-mono);font-size:11px;fill:var(--ink)}
+svg.chart .grid{stroke:var(--line);stroke-width:1}
+.h2h-sum{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;text-align:center}
+.h2h-sum .n{font-family:var(--f-display);font-weight:700;font-size:44px;line-height:1}
+.h2h-sum .who{font-size:13px;color:var(--muted)}
+.vs{font-family:var(--f-display);font-size:18px;color:var(--muted)}
+.delta.neg{color:var(--good)}.delta.pos{color:var(--accent)}
+table.posgrid td:first-child,table.posgrid th:first-child,table.lapgrid td:first-child,table.lapgrid th:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+table.posgrid th:first-child{text-align:left}
+table.posgrid td:first-child{text-align:left;white-space:normal;min-width:112px}
+table.posgrid th:nth-child(2),table.posgrid td:nth-child(2){text-align:right}
+table.posgrid td:nth-child(2){white-space:nowrap;min-width:0}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1 class="wordmark">Nata <span>do</span> Kart</h1>
+      <span id="who" class="sub"></span>
+    </div>
+    <div class="checker" aria-hidden="true"></div>
+    <nav class="tabs" aria-label="Seções">
+      <a href="#corridas" data-tab="corridas">Corridas</a>
+      <a href="#nova" data-tab="nova">Nova</a>
+      <a href="#comparativo" data-tab="comparativo">Comparativo</a>
+    </nav>
+  </header>
+  <main>
+    <div id="banners" class="stack"></div>
+    <section id="v-corridas" hidden></section>
+    <section id="v-nova" hidden></section>
+    <section id="v-comparativo" hidden></section>
+  </main>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+<datalist id="dl-names"></datalist>
+<datalist id="dl-tracks"></datalist>
+<datalist id="dl-layouts"></datalist>
+<datalist id="dl-classes"></datalist>
+
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+function h(tag, props, ...kids){
+  const el=document.createElement(tag);
+  for(const k in (props||{})){
+    const v=props[k];
+    if(k==="class") el.className=v;
+    else if(k==="text") el.textContent=v;
+    else if(k.startsWith("on")) el[k]=v;
+    else if(v===true) el.setAttribute(k,"");
+    else if(v!=null&&v!==false) el.setAttribute(k,v);
+  }
+  kids.flat(Infinity).forEach(c=>{ if(c==null||c===false) return; el.append(c.nodeType?c:document.createTextNode(String(c))); });
+  return el;
+}
+const SVGNS="http://www.w3.org/2000/svg";
+function s(tag, attrs, ...kids){
+  const el=document.createElementNS(SVGNS,tag);
+  for(const k in (attrs||{})){ if(attrs[k]!=null) el.setAttribute(k,attrs[k]); }
+  kids.flat().forEach(c=>{ if(c==null) return; el.append(c.nodeType?c:document.createTextNode(String(c))); });
+  return el;
+}
+function parseTime(str){
+  let t=String(str==null?"":str).trim().replace(/\s+/g,"");
+  if(!t) return null;
+  let m=t.match(/^(\d+)['’:](\d{1,2})[.:,](\d{1,3})$/);
+  if(m) return (+m[1])*60000+(+m[2])*1000+ +m[3].padEnd(3,"0");
+  m=t.match(/^(\d{1,3})[.,](\d{1,3})$/);
+  if(m) return (+m[1])*1000+ +m[2].padEnd(3,"0");
+  return null;
+}
+function fmt(ms){
+  if(ms==null||isNaN(ms)) return "–";
+  const m=Math.floor(ms/60000), sec=(ms%60000)/1000;
+  return m+":"+sec.toFixed(3).padStart(6,"0");
+}
+function fmtGap(ms){ return (ms>=0?"+":"−")+(Math.abs(ms)/1000).toFixed(3); }
+function fmtDate(d){ const p=String(d||"").split("-"); return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:String(d||""); }
+const norm=n=>String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().replace(/\s+/g," ").toLowerCase();
+const today=()=>new Date().toLocaleDateString("en-CA");
+const SRC={manual:"Manual",foto:"Foto",pdf:"PDF",racechrono:"Race Chrono"};
+const KINDS={qualify:"Qualify",corrida:"Corrida",voltas:"Volta a volta"};
+const CONDS={seca:"Pista seca",molhada:"Pista molhada"};
+const kindOf=r=>r&&KINDS[r.kind]?r.kind:"corrida";
+const condOf=r=>r&&CONDS[r.cond]?r.cond:"";
+const layoutOf=r=>String((r&&r.layout)||"").trim();
+let toastTimer=null;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true,3200); }
+function mapKind(v){ const t=norm(v); if(!t) return ""; if(/volta/.test(t)||/lap/.test(t)) return "voltas"; if(/tomada|quali|classif|treino|pole/.test(t)) return "qualify"; if(/corrida|race|bateria|prova|final/.test(t)) return "corrida"; return KINDS[t]?t:""; }
+function mapCond(v){ const t=norm(v); if(!t) return ""; if(/molh|chuv|wet|rain/.test(t)) return "molhada"; if(/sec|dry/.test(t)) return "seca"; return ""; }
+function parseTimes(str){ return String(str||"").split(/[\s;]+/).filter(Boolean); }
+function snap(val,list){ const k=norm(val); const f=(list||[]).find(x=>norm(x)===k); return f||val; }
+function titleCase(v){
+  const t=String(v==null?"":v).trim(); if(!t||t!==t.toUpperCase()) return t;
+  const small=new Set(["de","da","do","dos","das","e"]);
+  return t.toLowerCase().split(/\s+/).map((w,i)=>i&&small.has(w)?w:w.charAt(0).toUpperCase()+w.slice(1)).join(" ");
+}
+
+/* ---------- state ---------- */
+const claude=window.claude;
+let db=null,user=null,sample=null,limits=null;
+let me={id:null,name:""}, canWrite=null, canEdit=false;
+let races=[], loaded=false, slowLoad=false, dbMissing=false;
+let useSample=false;
+const openIds=new Set();
+const cmp={kind:"__all__",cond:"__all__",track:"__all__",layout:"__all__",classe:"__all__",selected:new Set(),init:false,a:"",b:""};
+const form={date:today(),kind:"",cond:"",track:"",layout:"",session:"",note:"",source:"manual",rows:[]};
+let dupArmed="";
+let ctl=null, importing=false, importMsg={text:"",bad:false};
+
+/* ---------- dados de exemplo (só na tela, nunca salvos) ---------- */
+const SAMPLE=(function(){
+  let seed=7; const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+  const pilots=[["Bruno",0],["Carla",250],["Diego",420],["Elisa",610],["Fábio",830]];
+  const places=[["Kartódromo Norte","Traçado 1",58400],["Kartódromo Aldeia","Pista longa",63100]];
+  const dates=["2026-08-08","2026-08-22","2026-09-05","2026-09-19","2026-10-03","2026-10-17","2026-10-24","2026-11-01"];
+  const out=[];
+  dates.forEach((d,i)=>{
+    const [tn,ly,base]=places[i%2]; const wet=(i===3||i===6); const pen=wet?4200:0;
+    const present=pilots.filter(()=>rnd()>0.12);
+    const mk=(kind,laps,extra)=>{
+      const res=present.map(([n,sk])=>({name:n,best:Math.round(base+pen+sk-i*18+rnd()*520),laps}));
+      res.sort((a,b)=>a.best-b.best).forEach((r,k)=>{r.pos=k+1;r.avg=r.best+Math.round(700+rnd()*500);});
+      return Object.assign({id:"ex"+out.length,date:d,kind,track:tn,layout:ly,cond:wet?"molhada":"seca",note:"",source:"manual",by:null,createdAt:out.length,results:res,example:true},extra||{});
+    };
+    out.push(mk("corrida",20+(i%3)));
+    if(i%2===0) out.push(mk("qualify",8));
+  });
+  const v=out[out.length-1]; // última atividade vira volta a volta de exemplo
+  const vr=Object.assign({},v,{id:"exv",kind:"voltas",results:v.results.slice(0,3).map(r=>{ const times=Array.from({length:8},(_,k)=>Math.round(r.best+300+rnd()*900-(k===5?250:0))); const b=Math.min(...times); return {name:r.name,pos:r.pos,best:b,avg:Math.round(times.reduce((a,c)=>a+c,0)/times.length),laps:times.length,lapTimes:times}; })});
+  out.push(vr);
+  return out;
+})();
+/* ---------- unificação de grafias (kartódromo e traçado) ---------- */
+const plain=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+const TSTOP=new Set(["kartodromo","kartodromos","autodromo","internacional","race","tracks","track","kart","karting","circuito","pista","a","funcionar","de","do","da","dos","das","e","o","em"]);
+const LSTOP=new Set(["circuito","tracado","layout","pista"]);
+const toks=s=>[...new Set(plain(s).split(" ").filter(w=>w&&!TSTOP.has(w)))];
+const lkey=s=>{ const w=plain(s).split(" ").filter(x=>x&&!LSTOP.has(x)); return w.length?w.join(" "):plain(s); };
+function sameTrack(a,b){
+  const A=toks(a),B=toks(b);
+  if(!A.length||!B.length) return plain(a)===plain(b);
+  const [S,L]=A.length<=B.length?[A,B]:[B,A];
+  if(S.every(w=>L.includes(w))&&(S.length>=2||S[0].length<=4||S.length===L.length)) return true;
+  const ini=L.filter(w=>!/^\d+$/.test(w)).map(w=>w[0]).join("");
+  return S.length===1&&ini.length>=2&&(S[0]===ini||S[0]==="k"+ini);
+}
+function buildCanon(src){
+  const tv=new Map();
+  src.forEach(r=>{ const t=String(r.track||"").trim(); if(t) tv.set(t,(tv.get(t)||0)+1); });
+  const vars=[...tv.keys()], par=vars.map((_,i)=>i);
+  const find=i=>par[i]===i?i:(par[i]=find(par[i]));
+  for(let i=0;i<vars.length;i++) for(let j=i+1;j<vars.length;j++) if(sameTrack(vars[i],vars[j])) par[find(j)]=find(i);
+  const groups=new Map(); vars.forEach((v,i)=>{ const g=find(i); if(!groups.has(g)) groups.set(g,[]); groups.get(g).push(v); });
+  const tmap=new Map();
+  groups.forEach(vs=>{ const win=vs.slice().sort((a,b)=>tv.get(b)-tv.get(a)||a.length-b.length)[0]; vs.forEach(v=>tmap.set(v,win)); });
+  const track=v=>{ const t=String(v||"").trim(); if(!t) return ""; if(tmap.has(t)) return tmap.get(t); const hit=vars.find(x=>sameTrack(x,t)); return hit?tmap.get(hit):t; };
+  const lc=new Map();
+  src.forEach(r=>{ const t=track(r.track), l=String(r.layout||"").trim(); if(!t||!l) return; if(!lc.has(t)) lc.set(t,new Map()); const m=lc.get(t), k=lkey(l); if(!m.has(k)) m.set(k,new Map()); const vm=m.get(k); vm.set(l,(vm.get(l)||0)+1); });
+  const layout=(t,v)=>{ const l=String(v||"").trim(); if(!l) return ""; const m=lc.get(t); if(!m) return l; const vm=m.get(lkey(l)); if(!vm) return l; return [...vm.keys()].sort((a,b)=>vm.get(b)-vm.get(a)||a.length-b.length)[0]; };
+  const list=src.map(r=>{ const t=track(r.track), l=layout(t,r.layout); return (t===String(r.track||"")&&l===String(r.layout||""))?r:Object.assign({},r,{track:t,layout:l}); });
+  return {track,layout,list};
+}
+const _canonMemo=new WeakMap();
+function canonFor(src){ let c=_canonMemo.get(src); if(!c){ c=buildCanon(src); _canonMemo.set(src,c); } return c; }
+const data=()=>canonFor(useSample?SAMPLE:races).list;
+function sortedRaces(){ return data().slice().sort((a,b)=> (b.date||"").localeCompare(a.date||"") || (b.createdAt||0)-(a.createdAt||0)); }
+function allPilots(src){
+  const m=new Map();
+  (src||data()).forEach(r=>(r.results||[]).forEach(x=>{ const k=norm(x.name); if(!k) return; const e=m.get(k)||{key:k,name:x.name.trim(),n:0}; e.n++; m.set(k,e); }));
+  return [...m.values()].sort((a,b)=>b.n-a.n||a.name.localeCompare(b.name,"pt"));
+}
+const colorOf=(i)=>"var(--c"+((i%6)+1)+")";
+
+/* ---------- roteamento ---------- */
+const VIEWS=["corridas","nova","comparativo"];
+function route(){ const hsh=(location.hash||"").replace("#",""); return VIEWS.includes(hsh)?hsh:"corridas"; }
+function renderAll(){
+  const cur=route();
+  document.querySelectorAll("nav.tabs a").forEach(a=>{ if(a.dataset.tab===cur) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  VIEWS.forEach(v=>$("#v-"+v).hidden=(v!==cur));
+  renderBanners(); renderLists();
+  if(cur==="corridas") renderCorridas();
+  if(cur==="comparativo") renderComparativo();
+  if(cur==="nova" && !$("#v-nova").firstChild) renderNova();
+}
+window.addEventListener("hashchange",()=>{ renderAll(); window.scrollTo(0,0); });
+
+function renderBanners(){
+  const b=$("#banners"); b.replaceChildren();
+  if(useSample) b.append(h("div",{class:"banner info"},h("span",{text:"Dados de exemplo, só nesta tela. Nada disso foi salvo."}),h("button",{class:"btn small",onclick:()=>{useSample=false;cmp.init=false;resetFilters();renderAll();}},"Sair do exemplo")));
+  if(dbMissing) b.append(h("div",{class:"banner"},h("span",{text:"O banco de dados do grupo não está disponível nesta visualização. Entre com sua conta para ver e salvar corridas."})));
+  else if(slowLoad&&!loaded) b.append(h("div",{class:"banner"},h("span",{text:"Ainda não consegui buscar as corridas. O que aparece pode estar desatualizado."})));
+}
+function renderLists(){
+  const dn=$("#dl-names"), dt=$("#dl-tracks"); dn.replaceChildren(); dt.replaceChildren();
+  allPilots().forEach(p=>dn.append(h("option",{value:p.name})));
+  [...new Set(data().map(r=>(r.track||"").trim()).filter(Boolean))].forEach(t=>dt.append(h("option",{value:t})));
+  const dc=$("#dl-classes"); dc.replaceChildren();
+  [...new Set(data().flatMap(r=>(r.results||[]).map(x=>(x.classe||"").trim())).filter(Boolean))].forEach(c=>dc.append(h("option",{value:c})));
+  updateLayoutList();
+}
+function updateLayoutList(){
+  const dl=$("#dl-layouts"); dl.replaceChildren();
+  const t=norm(form.track);
+  [...new Set(data().filter(r=>!t||norm(r.track)===t).map(layoutOf).filter(Boolean))].forEach(l=>dl.append(h("option",{value:l})));
+}
+async function fillNames(root){
+  if(!user) return;
+  const els=[...root.querySelectorAll("[data-uid]")]; if(!els.length) return;
+  const ids=[...new Set(els.map(e=>e.dataset.uid))];
+  const ps=await user.profiles(ids);
+  els.forEach(e=>{ const p=ps[e.dataset.uid]; e.textContent=(p&&p.name)||"um piloto"; });
+}
+function resetFilters(){ cmp.kind="__all__"; cmp.cond="__all__"; cmp.track="__all__"; cmp.layout="__all__"; cmp.classe="__all__"; cmp.init=false; }
+
+/* ---------- Corridas ---------- */
+function emptyState(title,text){
+  return h("div",{class:"panel empty"},h("h2",{text:title}),h("p",{text}),
+    h("div",{class:"actions"},
+      h("a",{class:"btn primary",href:"#nova"},"Registrar atividade"),
+      h("button",{class:"btn",onclick:()=>{useSample=true;resetFilters();renderAll();}},"Ver com dados de exemplo")));
+}
+function chipsOf(r){
+  return [h("span",{class:"chip kind",text:KINDS[kindOf(r)]}),
+    condOf(r)?h("span",{class:"chip "+(r.cond==="molhada"?"wet":"dry"),text:CONDS[r.cond]}):h("span",{class:"chip",text:"Condição não informada"}),
+    layoutOf(r)?h("span",{class:"chip",text:layoutOf(r)}):null,
+    h("span",{class:"chip",text:SRC[r.source]||"Manual"})];
+}
+function resultsTable(r){
+  const rs=r.results||[];
+  const best=Math.min(...rs.map(x=>x.best).filter(v=>v!=null),Infinity);
+  const showAvg=rs.some(x=>x.avg!=null), showTot=kindOf(r)==="corrida"&&rs.some(x=>x.total!=null);
+  const rows=rs.slice().sort((a,b)=>(a.pos||99)-(b.pos||99)).map(x=>{
+    const extra=[x.kart?"kart "+x.kart:"",x.classe||""].filter(Boolean).join(" · ");
+    return h("tr",null,
+      h("td",{class:"pos"+(x.pos===1?" lead":"")},x.status==="dq"?"DQ":(x.pos??"–")),
+      h("td",null,h("div",null,x.name),extra?h("div",{class:"sub",text:extra}):null),
+      h("td",{class:"t"+(x.best!=null&&x.best===best?" lead":"")},fmt(x.best)),
+      showAvg?h("td",{class:"t"},fmt(x.avg)):null,
+      showTot?h("td",{class:"t"},fmt(x.total)):null,
+      h("td",{class:"t"},x.laps??"–"));
+  });
+  return h("div",{class:"tscroll"},h("table",null,
+    h("thead",null,h("tr",null,h("th",{text:"Pos"}),h("th",{text:"Piloto"}),h("th",{text:"Melhor"}),showAvg?h("th",{text:"Média"}):null,showTot?h("th",{text:"Total"}):null,h("th",{text:"Voltas"}))),
+    h("tbody",null,rows)));
+}
+function lapGrid(r){
+  const res=(r.results||[]).filter(x=>Array.isArray(x.lapTimes)&&x.lapTimes.length);
+  if(!res.length) return null;
+  const n=Math.max(...res.map(x=>x.lapTimes.length));
+  return h("div",{class:"tscroll"},h("table",{class:"lapgrid"},
+    h("thead",null,h("tr",null,h("th",{text:"Volta"}),res.map(x=>h("th",{text:x.name})))),
+    h("tbody",null,Array.from({length:n},(_,i)=>h("tr",null,
+      h("td",{class:"t",style:"text-align:left"},i+1),
+      res.map(x=>{ const t=x.lapTimes[i]; return h("td",{class:"t"+(t!=null&&t===x.best?" lead":"")},fmt(t)); }))))));
+}
+let delArm=null;
+function renderCorridas(){
+  const v=$("#v-corridas"); v.replaceChildren();
+  const list=sortedRaces();
+  const root=h("div",{class:"stack"},
+    h("div",null,h("h2",{text:"Atividades"}),h("p",{class:"sub",text:list.length?list.length+(list.length===1?" atividade registrada":" atividades registradas"):"Histórico do grupo"})));
+  v.append(root);
+  if(!list.length){ root.append(emptyState("Nada registrado ainda","Registre a primeira pela aba Nova: digitando, ou enviando a foto da papeleta, o PDF do kartódromo ou um arquivo do Race Chrono.")); return; }
+  list.forEach(r=>{
+    const res=(r.results||[]).slice().sort((a,b)=>(a.pos||99)-(b.pos||99));
+    const w=res[0]; const grid=kindOf(r)==="voltas"?lapGrid(r):null;
+    const d=h("details",{class:"race"},
+      h("summary",null,
+        h("span",{class:"r-track",text:r.track||"Sem kartódromo"}),
+        h("span",{class:"r-date",text:fmtDate(r.date)+(r.session?" · "+r.session:"")}),
+        h("div",{class:"r-chips"},chipsOf(r)),
+        h("span",{class:"r-win"},w?[kindOf(r)==="qualify"?"Pole ":kindOf(r)==="voltas"?"Mais rápido ":"Vencedor ",h("b",{text:w.name}),w.best!=null?" · melhor volta "+fmt(w.best):""]:"Sem resultados")),
+      h("div",{class:"r-body"},
+        r.note?h("p",{class:"sub",text:r.note}):null,
+        resultsTable(r),
+        grid,
+        h("div",{class:"foot"},
+          h("span",null,r.example?"Exemplo":["Lançada por ",h("span",{"data-uid":r.by||""},"um piloto")]),
+          (!r.example&&(canEdit||(me.id&&r.by===me.id)))?delButton(r):null)));
+    if(openIds.has(r.id)) d.open=true;
+    d.addEventListener("toggle",()=>{ d.open?openIds.add(r.id):openIds.delete(r.id); });
+    root.append(d);
+  });
+  fillNames(v);
+}
+function delButton(r){
+  const b=h("button",{class:"btn small ghost"},"Excluir");
+  b.onclick=async()=>{
+    if(delArm!==r.id){ delArm=r.id; b.textContent="Confirmar exclusão"; b.style.borderColor="var(--accent)"; setTimeout(()=>{ if(delArm===r.id){delArm=null; b.textContent="Excluir"; b.style.borderColor="";} },4000); return; }
+    try{ await db.doc("races/"+r.id).delete(); toast("Atividade excluída"); }catch(e){ toast("Não foi possível excluir."); }
+    delArm=null;
+  };
+  return b;
+}
+
+/* ---------- Nova atividade ---------- */
+function blankRow(i){ return {name:"",pos:String(i),kart:"",classe:"",best:"",avg:"",total:"",laps:"",times:"",status:""}; }
+function blankRows(n){ return Array.from({length:n},(_,i)=>blankRow(i+1)); }
+form.rows=blankRows(4);
+function seg(key,opts,label){
+  const box=h("div",{class:"seg",role:"group","aria-label":label,id:"seg-"+key});
+  const paint=()=>{ [...box.children].forEach(b=>{ const on=b.dataset.v===form[key]; b.classList.toggle("on",on); b.setAttribute("aria-pressed",on?"true":"false"); }); box.classList.remove("bad"); };
+  Object.keys(opts).forEach(k=>box.append(h("button",{type:"button","data-v":k,onclick:()=>{ form[key]=k; paint(); if(key==="kind") drawRows(); }},opts[k])));
+  paint(); return box;
+}
+function renderNova(){
+  const v=$("#v-nova"); v.replaceChildren();
+  const noWrite = canWrite===false || !db;
+  const fileSt=(id,accept,multiple)=>h("input",{type:"file",id,accept,multiple:multiple||null,class:"fin"});
+  const pick=(id,input,title,sub)=>h("label",{class:"btn pick",id},title,h("small",{text:sub}),input);
+  const photoIn=fileSt("in-foto","image/jpeg,image/png,image/webp",true);
+  const pdfIn=fileSt("in-pdf","application/pdf,.pdf");
+  const txtIn=fileSt("in-rc",".csv,.txt,.tsv,text/csv,text/plain");
+  photoIn.onchange=()=>{ if(photoIn.files.length) runImport("foto",[...photoIn.files]); photoIn.value=""; };
+  pdfIn.onchange=()=>{ if(pdfIn.files.length) runImport("pdf",[pdfIn.files[0]]); pdfIn.value=""; };
+  txtIn.onchange=()=>{ if(txtIn.files.length) runImport("racechrono",[txtIn.files[0]]); txtIn.value=""; };
+  const status=h("div",{class:"status",id:"imp-status","aria-live":"polite"});
+  const rowsBox=h("div",{class:"rows",id:"rows"});
+  const dateIn=h("input",{type:"date",id:"f-date",value:form.date,oninput:e=>form.date=e.target.value});
+  const trackIn=h("input",{type:"text",id:"f-track",list:"dl-tracks",placeholder:"Ex.: Kartódromo Norte",value:form.track,autocomplete:"off",oninput:e=>{form.track=e.target.value;e.target.classList.remove("err");updateLayoutList();}});
+  const layoutIn=h("input",{type:"text",id:"f-layout",list:"dl-layouts",placeholder:"Ex.: Traçado 2, pista longa, sentido anti-horário",value:form.layout,autocomplete:"off",oninput:e=>{form.layout=e.target.value;e.target.classList.remove("err");}});
+  const noteIn=h("input",{type:"text",id:"f-note",placeholder:"Bateria, clima, observações (opcional)",value:form.note,oninput:e=>form.note=e.target.value});
+  const sessIn=h("input",{type:"text",id:"f-session",placeholder:"Ex.: Tomada 2 · 09:30",value:form.session,autocomplete:"off",oninput:e=>form.session=e.target.value});
+  v.append(h("div",{class:"stack"},
+    h("div",null,h("h2",{text:"Nova atividade"}),h("p",{class:"sub",text:"Envie um arquivo ou digite. O app preenche o que identificar e você confere tudo antes de salvar."})),
+    noWrite?h("div",{class:"banner"},h("span",{text:db?"Seu acesso a esta página é só de leitura. Peça permissão de colaborador para registrar atividades.":"Para salvar, abra a página com sua conta."})):null,
+    h("div",{class:"panel stack"},
+      h("div",{class:"lbl",text:"Ler de um arquivo"}),
+      h("div",{class:"imports"},
+        pick("b-foto",photoIn,"Foto da papeleta","JPG, PNG, WebP"),
+        pick("b-pdf",pdfIn,"PDF do kartódromo","resultado ou voltas"),
+        pick("b-rc",txtIn,"Race Chrono","CSV exportado do app")),
+      status),
+    h("div",{class:"panel stack"},
+      h("div",{class:"field"},h("div",{class:"lbl",text:"Atividade"}),seg("kind",KINDS,"Atividade")),
+      h("div",{class:"field"},h("div",{class:"lbl",text:"Condição da pista"}),seg("cond",CONDS,"Condição da pista")),
+      h("div",{class:"grid2 stackable"},
+        h("div",{class:"field"},h("label",{for:"f-date",text:"Data"}),dateIn),
+        h("div",{class:"field"},h("label",{for:"f-session",text:"Sessão"}),sessIn)),
+      h("div",{class:"field"},h("label",{for:"f-track",text:"Kartódromo"}),trackIn),
+      h("div",{class:"field"},h("label",{for:"f-layout",text:"Traçado"}),layoutIn),
+      h("div",{class:"field"},h("label",{for:"f-note",text:"Observação"}),noteIn)),
+    h("div",{class:"panel stack"},
+      h("div",{class:"lbl",text:"Resultados"}),
+      rowsBox,
+      h("div",{style:"display:flex;gap:10px;flex-wrap:wrap"},
+        h("button",{class:"btn",id:"b-add",onclick:()=>{form.rows.push(blankRow(form.rows.length+1));drawRows();}},"Adicionar piloto"),
+        h("button",{class:"btn ghost",id:"b-sort",onclick:()=>{sortRows();drawRows();}},"Ordenar pela melhor volta")),
+      h("div",{class:"status",id:"save-status","aria-live":"polite"})),
+    h("div",{style:"display:flex;gap:10px;flex-wrap:wrap"},
+      h("button",{class:"btn primary",id:"b-save",disabled:noWrite,onclick:saveRace},"Salvar atividade"),
+      h("button",{class:"btn ghost",id:"b-clear",onclick:()=>{resetForm();renderNova();}},"Limpar"))));
+  if(!sample&&!importMsg.text) importMsg={text:"A leitura automática de arquivos não está disponível nesta visualização. Abra o app pelo link dentro do Claude, com sua conta, ou preencha manualmente.",bad:true};
+  updateLayoutList(); drawRows(); paintImportStatus();
+}
+function bestOfRow(r){
+  if(form.kind==="voltas"){ const t=parseTimes(r.times).map(parseTime).filter(x=>x!=null); if(t.length) return Math.min(...t); }
+  return parseTime(r.best);
+}
+function drawRows(){
+  const box=$("#rows"); if(!box) return; box.replaceChildren();
+  const volt=form.kind==="voltas";
+  form.rows.forEach((r,i)=>{
+    const id="r"+i;
+    const inp=(key,ph,extra)=>h("input",Object.assign({type:"text",id:id+key,placeholder:ph,value:r[key],autocomplete:"off",oninput:e=>{r[key]=e.target.value;e.target.classList.remove("err");}},extra||{}));
+    const fld=(cls,key,label,ph,extra)=>h("div",{class:"field "+cls},h("label",{for:id+key,text:label}),inp(key,ph,extra));
+    const st=h("select",{id:id+"status",onchange:e=>{r.status=e.target.value;}},h("option",{value:"",text:"Normal"}),h("option",{value:"dq",text:"DQ"}));
+    st.value=r.status||"";
+    const top=[
+      fld("c2","pos","Pos","1",{inputmode:"numeric"}),
+      fld("c2","kart","Kart","21",{inputmode:"numeric"}),
+      fld("c6","name","Piloto","Nome",{list:"dl-names"}),
+      h("div",{class:"rm c2"},h("button",{class:"btn small ghost","aria-label":"Remover piloto "+(i+1),onclick:()=>{form.rows.splice(i,1);drawRows();}},"✕"))];
+    if(volt){
+      const sm=h("div",{class:"sm"});
+      const upd=()=>{ const ts=parseTimes(r.times); const ok=ts.map(parseTime); const good=ok.filter(x=>x!=null); sm.textContent= ts.length? good.length+" voltas válidas"+(good.length!==ts.length?" · "+(ts.length-good.length)+" com formato inválido":"")+(good.length?" · melhor "+fmt(Math.min(...good))+" · média "+fmt(Math.round(good.reduce((a,c)=>a+c,0)/good.length)):""):"Cole os tempos de cada volta, um por linha."; };
+      const ta=h("textarea",{id:id+"times",placeholder:"1:02.345\n1:01.980\n…",oninput:e=>{r.times=e.target.value;e.target.classList.remove("err");upd();}});
+      ta.value=r.times||""; upd();
+      box.append(h("div",{class:"row"},top,fld("c12","classe","Classe","Discovery",{list:"dl-classes"}),h("div",{class:"field c12"},h("label",{for:id+"times",text:"Tempos das voltas"}),ta),sm));
+    }else{
+      box.append(h("div",{class:"row"},top,
+        fld("c4","classe","Classe","Discovery",{list:"dl-classes"}),
+        fld("c4","best","Melhor volta","1:08.207"),
+        fld("c4","laps","Voltas","15",{inputmode:"numeric"}),
+        fld("c4","total","Tempo total","18:57.261"),
+        fld("c4","avg","Média","1:15.000"),
+        h("div",{class:"field c4"},h("label",{for:id+"status",text:"Situação"}),st)));
+    }
+  });
+}
+function sortRows(){
+  const ok=r=>r.status!=="dq";
+  const withT=form.rows.filter(r=>ok(r)&&bestOfRow(r)!=null).sort((a,b)=>bestOfRow(a)-bestOfRow(b));
+  const rest=form.rows.filter(r=>ok(r)&&bestOfRow(r)==null);
+  const dqs=form.rows.filter(r=>!ok(r));
+  form.rows=withT.concat(rest,dqs); let k=1; form.rows.forEach(r=>{ if(ok(r)) r.pos=String(k++); else r.pos=""; });
+}
+function resetForm(){ form.date=today(); form.kind=""; form.cond=""; form.track=""; form.layout=""; form.session=""; form.note=""; form.source="manual"; form.rows=blankRows(4); importMsg={text:"",bad:false}; dupArmed=""; }
+function paintImportStatus(){
+  const st=$("#imp-status"); if(!st) return; st.replaceChildren(); st.className="status"+(importMsg.bad?" bad":"");
+  if(importMsg.text) st.append(h("span",{text:importMsg.text}));
+  if(importing) st.append(h("button",{class:"btn small",onclick:()=>ctl&&ctl.abort()},"Parar"));
+  ["b-foto","b-pdf","b-rc"].forEach(i=>{ const b=$("#"+i); if(!b) return; b.classList.toggle("busy",importing); });
+}
+function sigOf(r){ const rs=r.results||[]; return rs.length+"|"+Math.min(...rs.map(x=>x.best).filter(v=>v!=null),Infinity); }
+function sameActivity(a,b){
+  if(a.date!==b.date||kindOf(a)!==kindOf(b)||norm(a.track)!==norm(b.track)) return false;
+  const sa=norm(a.session), sb=norm(b.session);
+  if(sa||sb) return sa===sb;
+  return sigOf(a)===sigOf(b);
+}
+async function saveRace(){
+  const ss=$("#save-status"); const fail=(m,el)=>{ss.textContent=m;ss.className="status bad"; if(el) el.classList.add("err");};
+  ss.className="status"; ss.textContent="";
+  if(!db) return fail("Sem acesso ao banco de dados.");
+  if(!form.kind){ $("#seg-kind").classList.add("bad"); return fail("Escolha a atividade: Qualify, Corrida ou Volta a volta."); }
+  if(!form.cond){ $("#seg-cond").classList.add("bad"); return fail("Informe se a pista estava seca ou molhada."); }
+  if(!form.date) return fail("Informe a data.",$("#f-date"));
+  if(!form.track.trim()) return fail("Informe o kartódromo.",$("#f-track"));
+  if(!form.layout.trim()) return fail("Informe o traçado.",$("#f-layout"));
+  const out=[]; let bad=false;
+  form.rows.forEach((r,i)=>{
+    const empty=!r.name.trim()&&!r.best.trim()&&!r.avg.trim()&&!r.total.trim()&&!r.times.trim();
+    if(empty) return;
+    if(!r.name.trim()){bad=true;return;}
+    const dq=r.status==="dq"||/^dq$/i.test(r.pos.trim());
+    const base={name:r.name.trim(),pos:dq?null:(parseInt(r.pos,10)||null),kart:r.kart.trim()||null,classe:r.classe.trim()||null,status:dq?"dq":null,_i:i};
+    if(form.kind==="voltas"){
+      const raw=parseTimes(r.times), t=raw.map(parseTime);
+      if(!raw.length||t.some(x=>x==null)){ bad=true; return; }
+      out.push(Object.assign(base,{best:Math.min(...t),avg:Math.round(t.reduce((a,c)=>a+c,0)/t.length),laps:t.length,lapTimes:t}));
+    }else{
+      const best=parseTime(r.best), avg=parseTime(r.avg), total=parseTime(r.total);
+      if((r.best.trim()&&best==null)||(r.avg.trim()&&avg==null)||(r.total.trim()&&total==null)) bad=true;
+      out.push(Object.assign(base,{best,avg,total,laps:parseInt(r.laps,10)||null}));
+    }
+  });
+  if(bad) return fail(form.kind==="voltas"?"Revise os pilotos: cada um precisa de nome e de tempos no formato 1:02.345.":"Revise os campos: todo piloto precisa de nome e os tempos seguem o formato 1:02.345.");
+  if(!out.length) return fail("Adicione ao menos um piloto.");
+  if(out.some(o=>o.pos==null&&o.status!=="dq")){
+    const o2=out.slice().sort((a,b)=>(a.best??9e9)-(b.best??9e9)||a._i-b._i);
+    let k=1; o2.forEach(o=>{ if(o.status==="dq") return; if(o.pos==null) o.pos=k; k++; });
+  }
+  out.forEach(o=>{ delete o._i; ["kart","classe","status","best","avg","total","laps"].forEach(k=>{ if(o[k]==null) delete o[k]; }); });
+  const cn=canonFor(races), trk=cn.track(form.track.trim());
+  const doc={date:form.date,kind:form.kind,cond:form.cond,track:trk,layout:cn.layout(trk,form.layout.trim()),session:form.session.trim(),note:form.note.trim(),source:form.source,by:me.id||null,createdAt:Date.now(),results:out};
+  const dk=doc.date+"|"+doc.kind+"|"+norm(doc.track)+"|"+norm(doc.session);
+  if(cn.list.some(r=>sameActivity(r,doc))&&dupArmed!==dk){
+    dupArmed=dk;
+    return fail("Esta atividade parece já estar registrada (mesmo dia, tipo, kartódromo e sessão). Toque em Salvar de novo se for outra.");
+  }
+  const b=$("#b-save"); b.disabled=true;
+  try{
+    await db.collection("races").add(doc);
+    useSample=false; resetForm(); toast("Atividade salva");
+    $("#v-nova").replaceChildren(); location.hash="#corridas";
+  }catch(e){
+    b.disabled=false;
+    fail(e&&e.code==="invalid_argument"?"Você não tem permissão para salvar. Peça acesso de colaborador.":e&&e.code==="quota_exceeded"?"O limite do banco foi atingido.":"Não foi possível salvar. Tente de novo.");
+  }
+}
+
+/* ---------- importação (Claude lê o arquivo) ---------- */
+const ERR={
+  not_granted:"Você não permitiu a leitura por Claude. Preencha manualmente ou tente de novo depois.",
+  rate_limited:"Muitas leituras em pouco tempo. Tente de novo em instantes.",
+  refused:"Não foi possível ler este arquivo.",
+  invalid_json:"A leitura não veio em formato utilizável. Tente de novo ou preencha manualmente.",
+  image_rejected:"Imagem não aceita (tipo ou tamanho). Tente outra foto.",
+  images_unavailable:"A leitura de fotos não está disponível aqui.",
+  prompt_too_large:"Arquivo grande demais para ler de uma vez.",
+  session_expired:"Sua sessão expirou. Entre de novo.",
+  empty_completion:"Não consegui extrair nada deste arquivo.",
+  nopdf:"O leitor de PDF não carregou. Envie uma foto ou impressão do resultado."
+};
+function knownLists(){
+  const L=canonFor(races).list;
+  const tr=[...new Set(L.map(r=>(r.track||"").trim()).filter(Boolean))].slice(0,30);
+  const ly=[...new Set(L.filter(r=>(r.track||"").trim()&&layoutOf(r)).map(r=>r.track.trim()+" → "+layoutOf(r)))].slice(0,40);
+  const pl=allPilots(L).map(p=>p.name).slice(0,80);
+  return {tr,ly,pl};
+}
+function buildPrompt(kind,text){
+  const K=knownLists();
+  const head="Você extrai dados de atividades de kart a partir de papeletas de kartódromos brasileiros. Hoje é "+today()+". ";
+  const src= kind==="foto" ? "As imagens anexas são fotos, capturas de tela ou impressões de uma papeleta. A tabela pode ocupar só uma parte da imagem e o texto pode ser pequeno: leia com atenção, linha por linha. Se forem várias imagens, são partes (páginas) da mesma atividade, em ordem."
+    : kind==="pdf" ? "O conteúdo abaixo vem de um PDF enviado por um kartódromo (texto extraído, colunas separadas por espaços; ou páginas em imagem, em ordem). Um bloco de piloto pode continuar na página seguinte."
+    : "O conteúdo abaixo vem de um arquivo exportado do RaceChrono de UM piloto. Pode ser uma lista de voltas ou um log de telemetria em que cada mudança de número de volta marca o início de uma volta; nesse caso calcule cada volta pela diferença entre os instantes de início, na unidade que os dados indicam, e use tipo \"voltas\" com todos os tempos das voltas completas.";
+  const kgv="Convenções das papeletas do Kartódromo Granja Viana (KGV), formato mais usado pelo grupo:\n"
+   +"- As primeiras linhas trazem o kartódromo e o traçado. Exemplos: \"KARTODROMO INTERNACIONAL GRANJA VIANA KGV RACE TRACKS CIRCUITO - 101\" ou \"KARTODROMO INTERNACIONAL GRANJA VIANA a funcionar KGV RACE TRACKS CIRCUITO - 101\" (\"a funcionar\" é ruído). Nos dois casos kartodromo = \"Kartódromo Granja Viana (KGV)\" e tracado = \"Circuito 101\". O rodapé \"Kartodromo Granja Viana\" é o mesmo local.\n"
+   +"- Ignore o que vem do navegador: data e hora de impressão no topo (ex.: \"07/11/2026, 00:05\"), endereços \"file:///...\" e numeração de páginas.\n"
+   +"- A linha seguinte traz o evento, as classes e a sessão. \"Resultados de KFF - KFF - DISCOVERY & ADVANCED - TOMADA 2 - 09:30\": TOMADA (tomada de tempo) é qualify. \"Resultados de ... PROVA 2 - 09:30\": PROVA é corrida. \"Tempos de volta de KFF - KFF - DISCOVERY & ADVANCED- PROVA 2 - 09:30\": é a folha volta a volta (tipo \"voltas\") daquela prova. Em sessao escreva \"Tomada 2 · 09:30\" ou \"Prova 2 · 09:30\".\n"
+   +"- Folha de resultados (qualify e corrida), colunas: Pos, No. (número do kart), Código, Nome, Classe (DISCOVERY, ADVANCED, TREINO, CONVIDADO), Comentários, Pitstops, Voltas (quantidade de voltas), Total Tempo, Diff, Espaço, Melhor Tempo (melhor volta) e S1/S2/S3. Preencha melhor com Melhor Tempo, total com Total Tempo (pode passar de 10 minutos, ex.: 18:57.261) e voltas com a coluna Voltas, não com Pitstops. Célula vazia vira null. Pos \"DQ\" é desclassificado: situacao \"dq\" e pos null. Ignore Diff, Espaço e textos como \"1 Volta\".\n"
+   +"- Folha volta a volta (\"Tempos de volta\"): cada piloto tem um bloco com título \"NNN - NOME - CLASSE\" (NNN é o kart) e uma tabela com Hora do dia, Volta, Volta do Líder, Volta Tm e Velocidade. Use SOMENTE a coluna \"Volta Tm\" como tempo da volta, na ordem da coluna Volta (1, 2, 3...). Hora do dia (ex.: 9:56:49.703), Volta do Líder e Velocidade (ex.: 44,100) não são tempos de volta. O tempo em cinza claro é a melhor volta do piloto: informe em melhor. voltas é a quantidade de linhas do piloto. Um bloco pode continuar na página seguinte: junte as voltas. Pode haver voltas lentas (ex.: 3:34.232): copie como está. Não pule nem repita voltas.\n"
+   +"- A papeleta não traz a data da atividade, só \"Gerada em DD/MM/AAAA HH:MM\" no rodapé. Use essa data em data.\n"
+   +"- Essas papeletas normalmente não informam pista seca ou molhada. Se não aparecer, condicao é null.\n";
+  const known=(K.tr.length||K.pl.length)?"\n\nCadastros já existentes no grupo. Quando o da folha for o mesmo, copie exatamente esta grafia:\n"
+    +(K.tr.length?"- Kartódromos: "+K.tr.join("; ")+"\n":"")+(K.ly.length?"- Traçados (kartódromo → traçado): "+K.ly.join("; ")+"\n":"")+(K.pl.length?"- Pilotos: "+K.pl.join("; ")+"\n":""):"";
+  return head+src+"\n\n"+kgv+"\nResponda somente com um JSON neste formato:\n"
+   +"{\"tipo\":\"qualify|corrida|voltas|null\",\"kartodromo\":\"nome ou null\",\"tracado\":\"nome/número do traçado ou null\",\"sessao\":\"texto ou null\",\"condicao\":\"seca|molhada|null\",\"data\":\"AAAA-MM-DD ou null\",\"resultados\":[{\"nome\":\"texto ou null\",\"pos\":1,\"kart\":\"número ou null\",\"classe\":\"texto ou null\",\"situacao\":\"dq ou null\",\"melhor\":\"m:ss.mmm ou null\",\"total\":\"m:ss.mmm ou null\",\"media\":\"m:ss.mmm ou null\",\"voltas\":20,\"tempos\":[\"m:ss.mmm\"]}]}\n"
+   +"Regras gerais:\n- tipo: \"qualify\" para classificação, tomada de tempo ou treino classificatório; \"corrida\" para bateria ou prova com posição final; \"voltas\" quando a folha lista cada volta individual de cada piloto (tabela volta a volta). Se não der para saber, null.\n"
+   +"- condicao: procure o texto PISTA SECA ou PISTA MOLHADA (ou equivalentes como seca, molhada, chuva) em qualquer parte da folha. Se não aparecer, null. Nunca deduza.\n"
+   +"- Para tipo \"voltas\": preencha \"tempos\" com TODOS os tempos de volta de cada piloto, em ordem, e informe melhor, media e voltas. Para os outros tipos, \"tempos\" é null.\n"
+   +"- Copie os nomes como aparecem; tempos no formato m:ss.mmm; use null para o que não estiver legível ou não existir, nunca invente; pos é a posição final na ordem da tabela; ignore linhas que não sejam pilotos."
+   +known+(text?"\n\nCONTEÚDO:\n"+text:"");
+}
+function compactTelemetry(text){
+  if(text.length<=50000) return text;
+  const lines=text.split(/\r?\n/);
+  let hi=-1,sep=",";
+  for(let i=0;i<Math.min(lines.length,300);i++){ const L=lines[i]; if(/lap/i.test(L)){ const c=[",",";","\t"].map(x=>[x,L.split(x).length]).sort((a,b)=>b[1]-a[1])[0]; if(c[1]>=3){hi=i;sep=c[0];break;} } }
+  if(hi<0) return text.slice(0,60000);
+  const cols=lines[hi].split(sep);
+  let li=cols.findIndex(c=>/lap/i.test(c)&&/(num|number|#|^\W*lap\W*$)/i.test(c)); if(li<0) li=cols.findIndex(c=>/lap/i.test(c));
+  const keep=lines.slice(Math.max(0,hi-20),hi+1); let prev=null;
+  for(let i=hi+1;i<lines.length&&keep.length<700;i++){ const f=lines[i].split(sep); if(f[li]!==prev){keep.push(lines[i]);prev=f[li];} }
+  if(lines.length) keep.push(lines[lines.length-1]);
+  return keep.join("\n").slice(0,60000);
+}
+async function pdfToInput(file){
+  if(typeof pdfjsLib==="undefined") throw {code:"nopdf"};
+  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  const pages=pdf.numPages, n=Math.min(pages,12); let text="";
+  for(let i=1;i<=n;i++){
+    const page=await pdf.getPage(i); const tc=await page.getTextContent(); const lines=new Map();
+    tc.items.forEach(it=>{ if(!it.str||!it.str.trim()) return; const y=Math.round(it.transform[5]/3); if(!lines.has(y)) lines.set(y,[]); lines.get(y).push({x:it.transform[4],t:it.str}); });
+    text+="--- página "+i+" ---\n"+[...lines.keys()].sort((a,b)=>b-a).map(y=>lines.get(y).sort((a,b)=>a.x-b.x).map(o=>o.t).join("  ")).join("\n")+"\n";
+  }
+  let images=null;
+  if(text.replace(/---[^-]*---|\s/g,"").length<40 && limits&&limits.images){
+    images=[]; const m=Math.min(pages,limits.images.maxCount);
+    for(let i=1;i<=m;i++){
+      const page=await pdf.getPage(i); const vp=page.getViewport({scale:1.6});
+      const cv=document.createElement("canvas"); cv.width=vp.width; cv.height=vp.height;
+      await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
+      images.push(await new Promise(r=>cv.toBlob(r,"image/jpeg",0.85)));
+    }
+  }
+  return {text:text.slice(0,60000),images,pages,sent:images?images.length:0};
+}
+async function runImport(kind,files){
+  if(!sample){ importMsg={text:"A leitura automática não está disponível nesta visualização. Abra o app pelo link dentro do Claude, com sua conta, ou preencha manualmente.",bad:true}; paintImportStatus(); return; }
+  if(importing){ importMsg={text:"Ainda lendo o arquivo anterior. Toque em Parar para cancelar e tente de novo.",bad:true}; paintImportStatus(); return; }
+  importing=true; ctl=new AbortController(); importMsg={text:"Lendo o arquivo… em PDFs longos pode levar alguns minutos.",bad:false}; paintImportStatus();
+  try{
+    let text="",images=null,part=null;
+    if(kind==="foto"){
+      if(!(limits&&limits.images)) throw {code:"images_unavailable"};
+      images=files.slice(0,limits.images.maxCount);
+      if(files.length>images.length) part={pages:files.length,sent:images.length};
+    }else if(kind==="pdf"){
+      const r=await pdfToInput(files[0]); text=r.text; images=r.images;
+      if(r.images&&r.sent<r.pages) part={pages:r.pages,sent:r.sent};
+    }else{
+      text=compactTelemetry(await files[0].text());
+    }
+    const opts={signal:ctl.signal}; if(images&&images.length) opts.images=images;
+    const out=await sample.json(buildPrompt(kind,images&&!text.trim()?"":text),opts);
+    if(!out||!Array.isArray(out.resultados)) throw {code:"invalid_json"};
+    const k=mapKind(out.tipo)||(kind==="racechrono"?"voltas":"");
+    const canon=canonFor(races);
+    const knownP=allPilots(canon.list).map(p=>p.name);
+    const tm=v=>{ if(!v) return ""; const f=fmt(parseTime(v)); return f==="–"?"":f; };
+    const rows=out.resultados.filter(x=>x&&(x.nome||x.melhor||x.media||x.total||(Array.isArray(x.tempos)&&x.tempos.length))).map((x,i)=>{
+      const times=Array.isArray(x.tempos)?x.tempos.map(t=>fmt(parseTime(t))).filter(t=>t!=="–"):[];
+      const dq=/^dq$/i.test(String(x.situacao||"").trim())||/^dq$/i.test(String(x.pos==null?"":x.pos).trim());
+      return {name:snap(titleCase(x.nome||(kind==="racechrono"?me.name||"":"")),knownP),
+        pos:dq?"":String(x.pos!=null&&x.pos!==""?x.pos:i+1),
+        kart:x.kart!=null?String(x.kart).trim().replace(/^0+(?=\d)/,""):"",classe:titleCase(x.classe||""),
+        best:tm(x.melhor),avg:tm(x.media),total:tm(x.total),laps:x.voltas!=null?String(x.voltas):"",times:times.join("\n"),status:dq?"dq":"",
+        _rep:x.melhor?parseTime(x.melhor):null,_lapsRep:(x.voltas!=null&&x.voltas!=="")?parseInt(x.voltas,10):null};
+    });
+    if(!rows.length) throw {code:"empty_completion"};
+    const warns=[];
+    if(k==="voltas"){
+      rows.forEach(r=>{ const ts=r.times?r.times.split("\n").map(parseTime).filter(v=>v!=null):[]; r._n=ts.length; r._min=ts.length?Math.min(...ts):null; });
+      const off=rows.filter(r=>r._min!=null&&((r._rep!=null&&r._rep!==r._min)||(r._lapsRep!=null&&!isNaN(r._lapsRep)&&r._lapsRep!==r._n))).map(r=>r.name);
+      rows.sort((a,b)=>(a._min==null?9e12:a._min)-(b._min==null?9e12:b._min));
+      rows.forEach((r,i)=>{ r.pos=String(i+1); });
+      if(off.length) warns.push("Confira as voltas de "+off.join(", ")+": a contagem de voltas ou a melhor volta não bate com a papeleta.");
+    }
+    rows.forEach(r=>{ delete r._rep; delete r._lapsRep; delete r._n; delete r._min; });
+    if(part) warns.push("O arquivo tem "+part.pages+" páginas e só "+part.sent+" foram enviadas para leitura. Pilotos do final podem estar faltando.");
+    form.rows=rows; form.source=kind;
+    if(k) form.kind=k;
+    const c=mapCond(out.condicao); if(c) form.cond=c;
+    const kt=out.kartodromo&&String(out.kartodromo).trim();
+    if(kt) form.track=canon.track(titleCase(kt.replace(/\s+a funcionar\s+/ig," ").replace(/^kart[oó]dromo\s+internacional\s+/i,"Kartódromo ")));
+    const lt=out.tracado&&String(out.tracado).trim();
+    if(lt) form.layout=canon.layout(form.track,titleCase(lt));
+    if(out.sessao&&String(out.sessao).trim()) form.session=String(out.sessao).trim();
+    if(out.data&&/^\d{4}-\d{2}-\d{2}$/.test(out.data)) form.date=out.data;
+    const miss=[]; if(!form.kind) miss.push("atividade"); if(!form.cond) miss.push("condição da pista"); if(!form.track.trim()) miss.push("kartódromo"); if(!form.layout.trim()) miss.push("traçado");
+    const parts=["Li "+rows.length+(rows.length===1?" piloto.":" pilotos."), miss.length?"Não consegui identificar: "+miss.join(", ")+". Preencha antes de salvar.":"Confira tudo antes de salvar."].concat(warns);
+    importMsg={text:parts.join(" "),bad:miss.length>0||warns.length>0};
+    importing=false; renderNova();
+  }catch(e){
+    importing=false;
+    if(e&&e.code==="cancelled") importMsg={text:"Leitura interrompida.",bad:false};
+    else importMsg={text:ERR[e&&e.code]||"Não foi possível ler o arquivo. Preencha manualmente.",bad:true};
+    paintImportStatus();
+  }
+}
+
+/* ---------- Comparativo ---------- */
+function leaderboard(rs){
+  const m=new Map();
+  rs.forEach(r=>(r.results||[]).forEach(x=>{
+    const key=norm(x.name); if(!key) return;
+    const e=m.get(key)||{key,name:x.name.trim(),best:null};
+    if(x.best!=null&&(e.best==null||x.best<e.best)) e.best=x.best;
+    m.set(key,e);
+  }));
+  return [...m.values()];
+}
+function posGrid(rs,idx,showBest){
+  const acts=rs.filter(r=>kindOf(r)!=="voltas").slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0));
+  if(!acts.length) return h("p",{class:"sub",text:"Sem qualify ou corrida nesta seleção."});
+  const main=acts.some(r=>kindOf(r)==="corrida")?"corrida":"qualify";
+  const people=new Map();
+  acts.forEach(r=>(r.results||[]).forEach(x=>{
+    const k=norm(x.name); if(!k) return;
+    const e=people.get(k)||{key:k,name:x.name.trim(),sum:0,n:0,best:null,lap:null,cells:new Map()};
+    const dq=x.status==="dq";
+    e.cells.set(r.id,dq?"DQ":(x.pos||null));
+    if(kindOf(r)===main&&!dq&&x.pos){ e.sum+=x.pos; e.n++; e.best=e.best==null?x.pos:Math.min(e.best,x.pos); }
+    if(x.best!=null&&(e.lap==null||x.best<e.lap)) e.lap=x.best;
+    people.set(k,e);
+  }));
+  const list=[...people.values()].sort((a,b)=>(a.n?a.sum/a.n:99)-(b.n?b.sum/b.n:99)||(a.best??99)-(b.best??99)||a.name.localeCompare(b.name,"pt"));
+  const lab=r=>{ const s=String(r.session||"").split("·")[0].trim(); return s||(kindOf(r)==="corrida"?"Corrida":"Qualify"); };
+  return h("div",{class:"tscroll"},h("table",{class:"posgrid"},
+    h("thead",null,h("tr",null,
+      h("th",{text:"Piloto"}),h("th",{text:"Média"}),h("th",{text:"Melhor"}),showBest?h("th",{text:"Melhor volta"}):null,
+      acts.map(r=>h("th",null,h("div",{text:fmtDate(r.date).slice(0,5)}),h("div",{class:"sub",style:"text-transform:none;letter-spacing:0",text:lab(r)}))))),
+    h("tbody",null,list.map(e=>h("tr",null,
+      h("td",null,h("span",{class:"dot",style:"background:"+colorOf(idx.get(e.key)||0)}),e.name),
+      h("td",{class:"t"},e.n?(e.sum/e.n).toFixed(1):"–"),
+      h("td",{class:"t"},e.best==null?"–":e.best),
+      showBest?h("td",{class:"t"},fmt(e.lap)):null,
+      acts.map(r=>{ const c=e.cells.get(r.id); return h("td",{class:"t"+(c===1?" lead":"")},c==null?"–":String(c)); }))))));
+}
+function filterSel(id,label,opts,val,on){
+  const sel=h("select",{id,onchange:e=>on(e.target.value)},opts.map(o=>h("option",{value:o[0],text:o[1]})));
+  sel.value=val; return h("div",{class:"field"},h("label",{for:id,text:label}),sel);
+}
+function renderComparativo(){
+  const v=$("#v-comparativo"); v.replaceChildren();
+  const all=sortedRaces();
+  const root=h("div",{class:"stack"},h("div",null,h("h2",{text:"Comparativo"}),h("p",{class:"sub",text:"Pilotos lado a lado, filtrando por atividade, condição, kartódromo e traçado."})));
+  v.append(root);
+  if(!all.length){ root.append(emptyState("Sem dados para comparar","O comparativo aparece assim que houver atividades registradas.")); return; }
+  const pilots=allPilots();
+  if(!cmp.init){ cmp.selected=new Set(pilots.slice(0,5).map(p=>p.key)); cmp.a=pilots[0]?pilots[0].key:""; cmp.b=pilots[1]?pilots[1].key:""; cmp.init=true; }
+  const tracks=[...new Set(all.map(r=>(r.track||"").trim()).filter(Boolean))];
+  if(cmp.track!=="__all__"&&!tracks.includes(cmp.track)) cmp.track="__all__";
+  const layouts=cmp.track==="__all__"?[]:[...new Set(all.filter(r=>(r.track||"").trim()===cmp.track).map(layoutOf).filter(Boolean))];
+  if(cmp.layout!=="__all__"&&!layouts.includes(cmp.layout)) cmp.layout="__all__";
+  root.append(h("div",{class:"panel stack"},
+    h("div",{class:"grid2 stackable"},
+      filterSel("c-kind","Atividade",[["__all__","Todas"],...Object.entries(KINDS)],cmp.kind,x=>{cmp.kind=x;renderComparativo();}),
+      filterSel("c-cond","Condição",[["__all__","Seca e molhada"],...Object.entries(CONDS)],cmp.cond,x=>{cmp.cond=x;renderComparativo();})),
+    h("div",{class:"grid2 stackable"},
+      filterSel("c-track","Kartódromo",[["__all__","Todos"],...tracks.map(t=>[t,t])],cmp.track,x=>{cmp.track=x;cmp.layout="__all__";renderComparativo();}),
+      filterSel("c-layout","Traçado",[["__all__",cmp.track==="__all__"?"Escolha o kartódromo":"Todos"],...layouts.map(l=>[l,l])],cmp.layout,x=>{cmp.layout=x;renderComparativo();}))));
+  const rs=all.filter(r=>(cmp.kind==="__all__"||kindOf(r)===cmp.kind)&&(cmp.cond==="__all__"||condOf(r)===cmp.cond)&&(cmp.track==="__all__"||(r.track||"").trim()===cmp.track)&&(cmp.layout==="__all__"||layoutOf(r)===cmp.layout));
+  if(!rs.length){ root.append(h("div",{class:"panel"},h("p",{class:"sub",text:"Nenhuma atividade com esses filtros."}))); return; }
+  const idx=new Map(pilots.map((p,i)=>[p.key,i]));
+  const showBest=cmp.track!=="__all__"&&(cmp.layout!=="__all__"||layouts.length<=1);
+  const mixed=new Set(rs.map(condOf).filter(Boolean)).size>1;
+  const nk=k=>rs.filter(r=>kindOf(r)===k).length;
+  root.append(h("div",{class:"panel stack"},
+    h("div",null,h("h3",{text:"Posição de chegada"}),
+      h("p",{class:"sub",text:rs.length+(rs.length===1?" atividade":" atividades")+" ("+nk("corrida")+" corridas, "+nk("qualify")+" qualifys, "+nk("voltas")+" volta a volta). Média e melhor posição consideram só as corridas; sem corrida na seleção, o qualify. DQ fica fora da média."}),
+      showBest&&mixed?h("p",{class:"sub",style:"color:var(--warn)",text:"Seca e molhada estão misturadas. Filtre a condição para comparar tempos de volta."}):null,
+      !showBest?h("p",{class:"sub",text:"Escolha kartódromo e traçado para ver a melhor volta."}):null),
+    posGrid(rs,idx,showBest)));
+  /* melhor volta */
+  let ctx=null;
+  if(showBest) ctx={track:cmp.track,layout:cmp.layout!=="__all__"?cmp.layout:(layouts[0]||""),races:rs};
+  else{
+    const cnt=new Map(); rs.forEach(r=>{ const k=(r.track||"").trim()+"||"+layoutOf(r); cnt.set(k,(cnt.get(k)||0)+1); });
+    const top=[...cnt.entries()].sort((a,b)=>b[1]-a[1])[0];
+    if(top){ const [t,l]=top[0].split("||"); ctx={track:t,layout:l,races:rs.filter(r=>(r.track||"").trim()===t&&layoutOf(r)===l)}; }
+  }
+  const bests=ctx?leaderboard(ctx.races).filter(e=>e.best!=null).sort((a,b)=>a.best-b.best):[];
+  root.append(h("div",{class:"panel stack"},
+    h("div",null,h("h3",{text:"Melhor volta"}),h("p",{class:"sub",text:(ctx?ctx.track+(ctx.layout?" · "+ctx.layout:""):"")+(showBest?"":" (combinação com mais atividades)")+" · diferença para a volta mais rápida"})),
+    bests.length?h("div",{class:"chartbox"},lapChart(bests,idx)):h("p",{class:"sub",text:"Sem tempos de volta nesta seleção."})));
+  /* evolução (corridas) */
+  const chrono=rs.filter(r=>kindOf(r)==="corrida").sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0));
+  const chips=h("div",{class:"chips"},pilots.map(p=>{
+    const on=cmp.selected.has(p.key);
+    return h("button",{class:"pchip","aria-pressed":on?"true":"false",onclick:()=>{
+      if(cmp.selected.has(p.key)) cmp.selected.delete(p.key); else if(cmp.selected.size<6) cmp.selected.add(p.key); else { toast("Máximo de 6 pilotos no gráfico."); return; }
+      renderComparativo();}},
+      h("span",{class:"dot",style:"background:"+(on?colorOf(idx.get(p.key)):"var(--line)")}),p.name);}));
+  root.append(h("div",{class:"panel stack"},
+    h("div",null,h("h3",{text:"Posição nas corridas"}),h("p",{class:"sub",text:"Só corridas. Quanto mais alto no gráfico, melhor a posição. Até 6 pilotos."})),
+    chips,
+    chrono.length<2?h("p",{class:"sub",text:"São necessárias ao menos 2 corridas na seleção atual."}):h("div",{class:"chartbox"},posChart(chrono,idx))));
+  /* cara a cara */
+  const sa=h("select",{id:"h-a",onchange:e=>{cmp.a=e.target.value;renderComparativo();}},pilots.map(p=>h("option",{value:p.key,text:p.name}))); sa.value=cmp.a;
+  const sb=h("select",{id:"h-b",onchange:e=>{cmp.b=e.target.value;renderComparativo();}},pilots.map(p=>h("option",{value:p.key,text:p.name}))); sb.value=cmp.b;
+  const chronoAll=rs.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0));
+  root.append(h("div",{class:"panel stack"},
+    h("div",null,h("h3",{text:"Cara a cara"}),h("p",{class:"sub",text:"Só atividades em que os dois participaram, dentro dos filtros acima."})),
+    h("div",{class:"grid2 stackable"},
+      h("div",{class:"field"},h("label",{for:"h-a",text:"Piloto A"}),sa),
+      h("div",{class:"field"},h("label",{for:"h-b",text:"Piloto B"}),sb)),
+    headToHead(chronoAll,pilots)));
+}
+function lapChart(bests,idx){
+  const W=360,rowH=38,top=6,H=top+bests.length*rowH+4, x0=96, maxL=190;
+  const lead=bests[0].best, maxGap=Math.max(...bests.map(b=>b.best-lead));
+  const svg=s("svg",{class:"chart",viewBox:"0 0 "+W+" "+H,role:"img","aria-label":"Diferença da melhor volta de cada piloto para a mais rápida"});
+  svg.append(s("line",{class:"grid",x1:x0,x2:x0,y1:top,y2:H-4}));
+  bests.forEach((b,i)=>{
+    const y=top+i*rowH, gap=b.best-lead, L=maxGap>0?Math.max(3,gap/maxGap*maxL):0, col=colorOf(idx.get(b.key)||0);
+    svg.append(s("text",{class:"nm",x:0,y:y+15},b.name.length>13?b.name.slice(0,12)+"…":b.name));
+    svg.append(s("text",{class:"tm",x:0,y:y+29},fmt(b.best)));
+    if(i===0){ svg.append(s("circle",{cx:x0,cy:y+17,r:5,fill:col})); svg.append(s("text",{class:"gp",x:x0+11,y:y+21},"mais rápido")); }
+    else{ svg.append(s("rect",{x:x0,y:y+9,width:L,height:16,rx:2,fill:col})); svg.append(s("text",{class:"gp",x:x0+L+6,y:y+21},fmtGap(gap))); }
+  });
+  return svg;
+}
+function posChart(chrono,idx){
+  const W=360,L=24,R=62,T=14,B=26;
+  const keys=[...cmp.selected].filter(k=>idx.has(k));
+  const maxPos=Math.max(2,...chrono.flatMap(r=>(r.results||[]).filter(x=>keys.includes(norm(x.name))).map(x=>x.pos||0)));
+  const rowH=28, H=T+(maxPos-1)*rowH+B, n=chrono.length;
+  const xs=i=>L+(n>1?i*(W-L-R)/(n-1):0), ys=p=>T+(p-1)*rowH;
+  const svg=s("svg",{class:"chart",viewBox:"0 0 "+W+" "+H,role:"img","aria-label":"Posição de cada piloto em cada corrida"});
+  for(let p=1;p<=maxPos;p++){ svg.append(s("line",{class:"grid",x1:L,x2:W-R+6,y1:ys(p),y2:ys(p)})); svg.append(s("text",{x:L-8,y:ys(p)+4,"text-anchor":"end"},p)); }
+  const step=Math.ceil(n/5);
+  chrono.forEach((r,i)=>{ if(i%step===0||i===n-1){ const p=String(r.date||"").split("-"); svg.append(s("text",{x:xs(i),y:H-8,"text-anchor":"middle"},p.length===3?p[2]+"/"+p[1]:"")); } });
+  const ends=[];
+  keys.forEach(k=>{
+    const col=colorOf(idx.get(k)); const pts=[]; let name="";
+    chrono.forEach((r,i)=>{ const x=(r.results||[]).find(q=>norm(q.name)===k); if(x&&x.pos){ pts.push([xs(i),ys(x.pos)]); name=x.name.trim(); } });
+    if(!pts.length) return;
+    if(pts.length>1) svg.append(s("polyline",{points:pts.map(p=>p.join(",")).join(" "),fill:"none",stroke:col,"stroke-width":2,"stroke-linejoin":"round"}));
+    pts.forEach((p,i)=>svg.append(s("circle",{cx:p[0],cy:p[1],r:i===pts.length-1?4.5:3,fill:col})));
+    ends.push({y:pts[pts.length-1][1],name,col});
+  });
+  ends.sort((a,b)=>a.y-b.y);
+  for(let i=1;i<ends.length;i++) if(ends[i].y-ends[i-1].y<13) ends[i].y=ends[i-1].y+13;
+  ends.forEach(e=>{ const t=s("text",{class:"nm",x:W-R+12,y:e.y+4},e.name.length>9?e.name.slice(0,8)+"…":e.name); t.style.fill=e.col; svg.append(t); });
+  return svg;
+}
+function headToHead(chrono,pilots){
+  const A=pilots.find(p=>p.key===cmp.a), B=pilots.find(p=>p.key===cmp.b);
+  if(!A||!B||A.key===B.key) return h("p",{class:"sub",text:"Escolha dois pilotos diferentes."});
+  const common=[];
+  chrono.forEach(r=>{ const a=(r.results||[]).find(x=>norm(x.name)===A.key), b=(r.results||[]).find(x=>norm(x.name)===B.key); if(a&&b) common.push({r,a,b}); });
+  if(!common.length) return h("p",{class:"sub",text:"Esses dois pilotos ainda não participaram juntos com esses filtros."});
+  const aw=common.filter(c=>c.a.pos&&c.b.pos&&c.a.pos<c.b.pos).length, bw=common.filter(c=>c.a.pos&&c.b.pos&&c.b.pos<c.a.pos).length;
+  const ia=pilots.indexOf(A), ib=pilots.indexOf(B);
+  return h("div",{class:"stack"},
+    h("div",{class:"h2h-sum"},
+      h("div",null,h("div",{class:"n",style:"color:"+colorOf(ia),text:aw}),h("div",{class:"who",text:A.name})),
+      h("div",{class:"vs",text:"à frente em "+common.length+(common.length===1?" atividade":" atividades")}),
+      h("div",null,h("div",{class:"n",style:"color:"+colorOf(ib),text:bw}),h("div",{class:"who",text:B.name}))),
+    h("div",{class:"tscroll"},h("table",null,
+      h("thead",null,h("tr",null,h("th",{text:"Data"}),h("th",{text:"Atividade"}),h("th",{text:"Pos A"}),h("th",{text:"Pos B"}),h("th",{text:"Melhor A"}),h("th",{text:"Melhor B"}),h("th",{text:"A − B"}))),
+      h("tbody",null,common.slice().reverse().map(c=>{
+        const d=(c.a.best!=null&&c.b.best!=null)?c.a.best-c.b.best:null;
+        return h("tr",null,h("td",{class:"t"},fmtDate(c.r.date).slice(0,5)),
+          h("td",null,KINDS[kindOf(c.r)]+" · "+(c.r.track||"")+(layoutOf(c.r)?" · "+layoutOf(c.r):"")+(condOf(c.r)?" · "+(c.r.cond==="molhada"?"molhada":"seca"):"")),
+          h("td",{class:"t"},c.a.pos??"–"),h("td",{class:"t"},c.b.pos??"–"),
+          h("td",{class:"t"},fmt(c.a.best)),h("td",{class:"t"},fmt(c.b.best)),
+          h("td",{class:"t delta "+(d==null?"":d<0?"neg":"pos")},d==null?"–":fmtGap(d)));})))),
+    h("p",{class:"sub",text:"A − B negativo: o piloto A foi mais rápido."}));
+}
+
+/* ---------- inicialização ---------- */
+renderAll();
+(async function init(){
+  try{ user=await (claude&&claude.use?claude.use("user"):null); }catch(e){ user=null; }
+  if(user){ try{ me=await user.me(); canWrite=await user.can("data.write"); canEdit=await user.canEdit(); }catch(e){} }
+  if(me&&me.name) $("#who").textContent=me.name;
+  try{ sample=await (claude&&claude.use?claude.use("sample"):null); }catch(e){ sample=null; }
+  if(sample){ try{ limits=await sample.limits(); }catch(e){ limits=null; } }
+  try{ db=await (claude&&claude.use?claude.use("db"):null); }catch(e){ db=null; }
+  if(!db){ dbMissing=true; $("#v-nova").replaceChildren(); renderAll(); return; }
+  const timer=setTimeout(()=>{ if(!loaded){ slowLoad=true; renderBanners(); } },10000);
+  db.collection("races").onSnapshot(snap=>{
+    races=snap.docs.map(d=>Object.assign({id:d.id},d.data())).filter(r=>r&&Array.isArray(r.results));
+    if(!snap.metadata.fromCache){ loaded=true; clearTimeout(timer); slowLoad=false; }
+    renderBanners(); renderLists();
+    const cur=route(); if(cur==="corridas") renderCorridas(); if(cur==="comparativo") renderComparativo();
+  },err=>{ clearTimeout(timer); dbMissing=true; renderAll(); });
+  $("#v-nova").replaceChildren(); renderAll();
+})();
+})();
+</script>
+
+</body></html>
